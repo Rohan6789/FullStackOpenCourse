@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
 
 const Filter = ({filter, setFunc}) =>  {
   
@@ -58,6 +59,17 @@ const App = () => {
   const [ newNumber, setNewNumber ] = useState('')
   const [ newFilter, setNewFilter ] = useState('')
 
+  useEffect(() => {
+    console.log('effect')
+    axios
+      .get('http://localhost:3001/persons')
+      .then(response => {
+        console.log('promise fulfilled')
+        setPersons(response.data)
+      })
+  }, [])
+  
+
   const addPerson = (event) => {
     event.preventDefault()
 
@@ -87,7 +99,7 @@ const App = () => {
 
 
   function filterNames(people) {
-    if(newFilter != '') {
+    if(newFilter !== '') {
       return persons.filter(p => p.name.toLowerCase().includes(newFilter.toLowerCase())).map((person) => 
       <li key={person.name}>{person.name + " " + person.number}</li>
       )
