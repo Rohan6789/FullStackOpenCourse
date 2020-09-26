@@ -47,7 +47,6 @@ const DisplayFullCountry = ({country}) => {
     query: country.capital
   }
 
-
   return (
     <>
     <h1>{country.name}</h1>
