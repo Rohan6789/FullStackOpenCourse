@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import pbService from './services/phonebook'
+
 
 const Filter = ({filter, setFunc}) =>  {
   
@@ -42,6 +44,7 @@ const AddPerson = ({submitFunc, nName, handleName, nNum, handleNum}) => {
   )
 }
 
+
 const DisplayNames = ({filterFunc, personList}) => {
   
   return (
@@ -51,31 +54,57 @@ const DisplayNames = ({filterFunc, personList}) => {
   )
 }
 
+const Notification = ({ message }) => {
+  if (message === null) {
+    return null
+  }
+
+  return (
+    <div className="error">
+      {message}
+    </div>
+  )
+}
+
 const App = () => {
   const [ persons, setPersons ] = useState([
-    { name: 'Arto Hellas', number: '040-1234567' }
+    { name: 'Arto Hellas', number: '040-1234567', id: 0 }
   ]) 
   const [ newName, setNewName ] = useState('')
   const [ newNumber, setNewNumber ] = useState('')
   const [ newFilter, setNewFilter ] = useState('')
-
+  const [errorMessage, setErrorMessage] = useState(null)
+  
   useEffect(() => {
-    console.log('effect')
-    axios
-      .get('http://localhost:3001/persons')
+    pbService
+      .getAll()
       .then(response => {
-        console.log('promise fulfilled')
         setPersons(response.data)
       })
   }, [])
-  
 
   const addPerson = (event) => {
     event.preventDefault()
 
     var allNames = persons.map(n => n.name)
+
     if (allNames.includes(newName)) {
-      window.alert(`${newName} is already added to phonebook`)
+      const person = persons.find(p => p.name === newName)
+      const changedPerson = { ...person, number: newNumber }
+      var id
+      persons.forEach(p => {
+        if(p.name == newName) {
+          id = p.id
+          console.log("triggered");
+          console.log('a', p, p.name);
+        }
+      }) 
+
+      pbService
+      .update(id, changedPerson)
+      .then(response => {
+        setPersons(persons.map(person => person.name !== newName ? person : response.data))
+      })
       return;
     }
 
@@ -83,8 +112,23 @@ const App = () => {
       name: newName,
       number: newNumber
     }
-    setPersons(persons.concat(personObject))
+    //setPersons(persons.concat(personObject))
     setNewName('')
+
+    setErrorMessage(
+      `Added ${personObject.name}`
+    )
+    setTimeout(() => {
+      setErrorMessage(null)
+    }, 5000)
+
+    pbService
+      .create(personObject)
+      .then(response => {
+        setPersons(persons.concat(response.data))
+        setNewName('')
+        setNewNumber('')
+      })
   }
 
   const handleNameChange = (event) => {
@@ -97,22 +141,51 @@ const App = () => {
     setNewNumber(event.target.value)
   }
 
+  const DeleteName = ({ name }) => {
+    return (
+      <form onSubmit={() => handleDeletion(name)}>
+        <div>
+          <button type="submit">delete</button>
+        </div>
+      </form>
+    )
+  }
+  
+
+  function handleDeletion(name) {
+    var id
+    persons.forEach(p => {
+      if(p.name == name) {
+        id = p.id
+        console.log("triggered");
+        console.log('a', p, p.name);
+      }
+    }) 
+    pbService
+       .del(id)
+       .then(response => {
+         setPersons(persons.filter(person => person.name !== name))
+         .catch(() => console.log("Can’t access " + id + " response. Blocked by browser?"))
+     })
+  }
+
 
   function filterNames(people) {
     if(newFilter !== '') {
       return persons.filter(p => p.name.toLowerCase().includes(newFilter.toLowerCase())).map((person) => 
-      <li key={person.name}>{person.name + " " + person.number}</li>
+      <li key={person.name}>{person.name + " " + person.number} <DeleteName name={person.name}/> </li>
       )
     }
     else {
       return persons.map((person) => 
-      <li key={person.name}>{person.name + " " + person.number}</li>
+      <li key={person.name}>{person.name + " " + person.number} <DeleteName name={person.name}/> </li>
       )
     }
   }
 
   return (
     <div>
+      <Notification message={errorMessage} />
       <h2>Phonebook</h2>
       <Filter filter={newFilter} setFunc={setNewFilter}/>
       
