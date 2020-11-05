@@ -1,9 +1,11 @@
 const express = require('express')
 var morgan = require('morgan')
 const app = express()
+const cors = require('cors')
 
 app.use(express.json())
 app.use(morgan('tiny'))
+app.use(cors())
 
 let phonebook = [
   {
@@ -32,11 +34,11 @@ app.get('/', (req, res) => {
   res.send('<h1>Landing page</h1>')
 })
 
-app.get('/api/phonebook', (req, res) => {
+app.get('/api/persons', (req, res) => {
   res.json(phonebook)
 })
 
-app.get('/api/phonebook/persons/:id', (request, response) => {
+app.get('/api/persons/:id', (request, response) => {
     const id = Number(request.params.id)
     const contact = phonebook.find(contact => contact.id === id)
     if (contact) {
@@ -46,7 +48,7 @@ app.get('/api/phonebook/persons/:id', (request, response) => {
     }
 })
 
-app.delete('/api/phonebook/delete/:id', (request, response) => {
+app.delete('/api/persons/delete/:id', (request, response) => {
     const id = Number(request.params.id)
     phonebook = phonebook.filter(contact => contact.id !== id)
   
@@ -86,10 +88,10 @@ app.get('/info', (req, res) => {
 
 app.get('/', function (req, res) {
     res.send('hello, world!')
-  })
+})
 
 
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
