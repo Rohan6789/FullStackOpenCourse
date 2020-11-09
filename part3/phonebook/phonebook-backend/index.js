@@ -1,7 +1,12 @@
+const Contact = require('./models/contact')
+
 const express = require('express')
 var morgan = require('morgan')
 const app = express()
 const cors = require('cors')
+
+require('dotenv').config()
+const PORT = process.env.PORT
 
 app.use(express.json())
 app.use(morgan('tiny'))
@@ -36,7 +41,9 @@ app.get('/', (req, res) => {
 })
 
 app.get('/api/persons', (req, res) => {
-  res.json(phonebook)
+  Contact.find({}).then(contacts => {
+    res.json(contacts)
+  })
 })
 
 app.get('/api/persons/:id', (request, response) => {
@@ -71,9 +78,9 @@ app.post('/api/persons', (request, response) => {
         id: generateId(),
     }
   
-    phonebook = phonebook.concat(contact)
-  
-    response.json(contact)
+    contact.save().then(savedContact => {
+      response.json(savedContact.toJSON())
+    })
 })
 
 const generateId = () => {
@@ -92,7 +99,7 @@ app.get('/', function (req, res) {
 })
 
 
-const PORT = process.env.PORT || 3001
+//const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`)
 })
